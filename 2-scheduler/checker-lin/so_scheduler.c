@@ -85,17 +85,6 @@ Queue_t *new_queue(TPriorityFunc priority_func)
 	return q;
 }
 
-/*
-	Functie care elibereaza memoria folosita de coada, folosindu-se 
-de free_elem pentru eliberarea memoriei elementelor
-*/
-void free_queue(Queue_t **q, TFreeElem free_elem)
-{
-	free_list(&((*q)->front), free_elem);
-	free(*q);
-}
-
-
 /* Definesc structura pentru un thread dintr-un scheduler care contine:
 - prioritatea threadului
 - id ul threadului
@@ -170,7 +159,14 @@ int so_init(unsigned int time_quantum, unsigned int io)
 
 	scheduler->terminated = new_queue(0);
 	if (scheduler->terminated == NULL) {
-		free_queue(&scheduler->ready, free);
+		while (scheduler->ready->front != NULL) {
+			List_t current = scheduler->ready->front;
+			scheduler->ready->front = scheduler->ready->front->next;
+			free(current->value);
+			free(current);
+		}
+		//free_list(&scheduler->ready->front, free);
+		free(scheduler->ready);
 		free(scheduler);
 		return -1;
 	}
@@ -178,8 +174,23 @@ int so_init(unsigned int time_quantum, unsigned int io)
 
 	scheduler->waiting = (Queue_t **) calloc(io, sizeof(Queue_t *));
 	if (scheduler->waiting == NULL) {
-		free_queue(&scheduler->ready, free);
-		free_queue(&scheduler->terminated, free);
+
+		while (scheduler->ready->front != NULL) {
+			List_t current = scheduler->ready->front;
+			scheduler->ready->front = scheduler->ready->front->next;
+			free(current->value);
+			free(current);
+		}
+		free(scheduler->ready);
+
+		while (scheduler->terminated->front != NULL) {
+			List_t current = scheduler->terminated->front;
+			scheduler->terminated->front = scheduler->terminated->front->next;
+			free(current->value);
+			free(current);
+		}
+		free(scheduler->terminated);
+
 		free(scheduler);
 		return -1;
 	}
@@ -232,8 +243,21 @@ void so_end(void)
 		if (scheduler->threads_nr != 0)
 			sem_wait(&scheduler->stop);
 
-		free_queue(&scheduler->terminated, free_thread);
-		free_queue(&scheduler->ready, free_thread);
+		while (scheduler->terminated->front != NULL) {
+			List_t current = scheduler->terminated->front;
+			scheduler->terminated->front = scheduler->terminated->front->next;
+			free_thread(current->value);
+			free(current);
+		}
+		free(scheduler->terminated);
+
+		while (scheduler->ready->front != NULL) {
+			List_t current = scheduler->ready->front;
+			scheduler->ready->front = scheduler->ready->front->next;
+			free_thread(current->value);
+			free(current);
+		}
+		free(scheduler->ready);
 
 		if (scheduler->running){
 			pthread_join(scheduler->running->id, NULL);
@@ -242,8 +266,15 @@ void so_end(void)
 			free(scheduler->running);
 		}
 
-		for (int i = 0; i < scheduler->io; i++)
-			free_queue(&scheduler->waiting[i], free);
+		for (int i = 0; i < scheduler->io; i++) {
+			while (scheduler->waiting[i]->front != NULL) {
+			List_t current = scheduler->waiting[i]->front;
+			scheduler->waiting[i]->front = scheduler->waiting[i]->front->next;
+			free(current->value);
+			free(current);
+			}
+			free(scheduler->waiting[i]);
+		}
 
 		free(scheduler->waiting);
 		free(scheduler);
