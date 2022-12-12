@@ -94,53 +94,6 @@ void free_queue(Queue_t **q, TFreeElem free_elem)
 	free(*q);
 }
 
-/*
-	Functie care introduce un element in coada in functie de 
-prioritatea acestuia; intoarce 0 in caz de reustia 
-si -1 in caz de esec
-*/
-int push_back(Queue_t *q, void *value)
-{
-	List_t elem = add_node(value);
-	
-	if (elem == NULL)
-		return -1;
-
-	if (q->front == NULL) {
-		q->front = q->back = elem;
-		return 0;
-	}
-	/* adauga primul element */
-
-	if (q->priority(q->back->value) >= q->priority(value)) {
-		q->back->next = elem;
-		q->back = elem;
-		return 0;
-	}
-	/*pune elementul in spatele(la coada) cozii*/
-
-	List_t list = q->front, cnt = NULL;
-
-	while ((q->priority(value) <= q->priority(list->value)) && (list != NULL)) {
-		cnt = list;
-		list = list->next;
-	}
-	/*
-	parcurge lista q->front pana cand prioritatea lui elem este mai mare
-	*/
-
-	if (cnt != NULL) {
-		elem->next = list;
-		cnt->next = elem;
-		/*se plaseaza elem intre cnt si list*/
-	} else {
-		elem->next = q->front;
-		q->front = elem;
-		/*elem devine primul element din lista*/
-		
-	}
-	return 0;
-}
 
 /* Definesc structura pentru un thread dintr-un scheduler care contine:
 - prioritatea threadului
