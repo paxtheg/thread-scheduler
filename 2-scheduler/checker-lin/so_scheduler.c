@@ -217,14 +217,7 @@ int thread_priority(void *ads)
 	return ((Thread_t *) ads)->priority;
 }
 
-/* 
-	Functie care e utilizata pentru creearea unei cozi de 
-threaduri care sunt in starea TERMINATED
-*/
-int check_terminated_thread_priority(void *ads)
-{
-	return 0;
-}
+
 
 Scheduler_t *scheduler;
 
@@ -250,7 +243,7 @@ int so_init(unsigned int time_quantum, unsigned int io)
 	scheduler->io = io;
 	scheduler->running = NULL;
 
-	scheduler->terminated = new_queue(check_terminated_thread_priority);
+	scheduler->terminated = new_queue(0);
 	if (scheduler->terminated == NULL) {
 		free_queue(&scheduler->ready, free);
 		free(scheduler);
@@ -268,7 +261,7 @@ int so_init(unsigned int time_quantum, unsigned int io)
 
 	for (int i = 0; i < io; i++) {
 		scheduler->waiting[i] =
-			new_queue(check_terminated_thread_priority);
+			new_queue(0);
 		if (scheduler->waiting[i] == NULL)
 			return -1;
 	}
