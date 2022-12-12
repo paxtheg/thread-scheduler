@@ -142,34 +142,6 @@ int push_back(Queue_t *q, void *value)
 	return 0;
 }
 
-/*
-Functia elimina primul element din coada si il afiseaza
-*/
-void *pop_front(Queue_t *q)
-{
-	if (!q->front)
-		return NULL;
-
-	List_t elem = q->front;
-	void *value = elem->value;
-	
-	q->front = elem->next;
-	free(elem);
-
-	return value;
-}
-
-/* 
-Functia intoarce primul element din coada sau NULL cand coada este goala
-*/
-void *queue_front(Queue_t *q)
-{
-	if (q->front == NULL)
-		return NULL;
-
-	return q->front->value;
-}
-
 /* Definesc structura pentru un thread dintr-un scheduler care contine:
 - prioritatea threadului
 - id ul threadului
