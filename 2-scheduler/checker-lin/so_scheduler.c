@@ -45,23 +45,6 @@ List_t add_node(void *value)
 }
 
 /*
-	Functie care elibereaza memoria alocata listei, folosindu-se de 
-functia free_elem pentru a elibera fiecare element
-*/
-void free_list(List_t *list_ads, TFreeElem free_elem)
-{
-	List_t list = *list_ads;
-
-	while (list != NULL) {
-		List_t current = list;
-		
-		list = list->next;
-		free_elem(current->value);
-		free(current);
-	}
-}
-
-/*
 Definesc structura cozii de prioritate
 */
 typedef struct {
