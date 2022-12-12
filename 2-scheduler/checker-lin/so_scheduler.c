@@ -77,7 +77,8 @@ Queue_t *new_queue(TPriorityFunc priority_func)
 	Queue_t *q = (Queue_t *) malloc(sizeof(Queue_t));
 
 	if (q != NULL) {
-		q->front = q->back = NULL;
+		q->front = NULL;
+		q->back = NULL;
 		q->priority = priority_func;
 	}
 
@@ -108,7 +109,6 @@ typedef struct {
 	int priority; 
 	pthread_t id; 
 	so_handler *handler; 
-
 	State state; 
 	unsigned int time_remaining; 
 	sem_t is_planned;
@@ -215,8 +215,9 @@ void free_thread(void *ads)
 	Thread_t *thread = (Thread_t *) ads;
 
 	pthread_join(thread->id, NULL);
-	sem_destroy(&thread->is_planned);
 	sem_destroy(&thread->is_running);
+	sem_destroy(&thread->is_planned);
+	
 	free(thread);
 }
 
@@ -234,8 +235,12 @@ void so_end(void)
 		free_queue(&scheduler->terminated, free_thread);
 		free_queue(&scheduler->ready, free_thread);
 
-		if (scheduler->running)
-			free_thread(&scheduler->running);
+		if (scheduler->running){
+			pthread_join(scheduler->running->id, NULL);
+			sem_destroy(&scheduler->running->is_running);
+			sem_destroy(&scheduler->running->is_planned);
+			free(scheduler->running);
+		}
 
 		for (int i = 0; i < scheduler->io; i++)
 			free_queue(&scheduler->waiting[i], free);
