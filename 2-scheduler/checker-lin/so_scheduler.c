@@ -281,9 +281,41 @@ void so_end(void)
     scheduler = NULL;
 }
 
+/*
+ Functia incepe un nou thread si ii planifica executia; 
+ intoarce id ul threadului
+ */
 tid_t so_fork(so_handler *func, unsigned int priority)
 {
-    return INVALID_TID;
+    Thread_t *thread;
+
+    if (priority > SO_MAX_PRIO || !func)
+        return INVALID_TID;
+
+    thread = (Thread_t *)malloc(sizeof(Thread_t));
+    if (!thread)
+        return INVALID_TID;
+
+    thread->priority = priority;
+    thread->state = NEW;
+    thread->time_remaining = scheduler->time_quantum;
+    thread->handler = func;
+    sem_init(&thread->is_planned, 0, 0);
+    sem_init(&thread->is_running, 0, 0);
+    (scheduler->threads_nr)++;
+
+    if (pthread_create(&thread->id, NULL, thread_func, thread) != 0)
+    {
+        free(thread);
+        return INVALID_TID;
+    }
+
+    sem_wait(&thread->is_planned);
+
+    if (scheduler->running != thread)
+        so_exec();
+
+    return thread->id;
 }
 
 void so_exec(void)
